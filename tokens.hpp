@@ -33,7 +33,6 @@
     NUM = 28,
     STRING = 29,
     AUTO=30,
-    WHITESPACE = 31
   };
   extern int yylineno;
   extern char* yytext;

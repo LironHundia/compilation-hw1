@@ -1,2 +1,7 @@
 bool void 
 int
+;     ,
+(		)
+HEL13there
+0
+1234
