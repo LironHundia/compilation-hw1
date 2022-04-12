@@ -1,5 +1,6 @@
 #include "tokens.hpp"
 #include <iostream>
+#include <sstream>
 
 //declarations
 class BasicToken {
@@ -16,10 +17,25 @@ public:
 	void handleToken() override;
 };
 
+
+class StringToken : public BasicToken {
+public:
+	static std::string our_string;
+	static bool is_string_open;
+	StringToken(tokentype type = STRING) : BasicToken(type) {}
+	void handleToken() override;
+};
+
+
 BasicToken* identifyToken(int token);
 void handleError(int token);
+void edit_lexema(std::string& to_edit);
 
 //definitions
+std::string StringToken::our_string = std::string();
+bool StringToken::is_string_open = false;
+
+
 void BasicToken::handleToken() {
 	std::string token;
 	if (type == VOID) { token = std::string("VOID"); }
@@ -58,6 +74,47 @@ void CommentToken::handleToken() {
 	std::cout << yylineno << " COMMENT //" << std::endl;
 }
 
+void StringToken::handleToken() {
+	if (yytext == std::string("\"")){
+		if(is_string_open == false) {
+			is_string_open = true;
+		}
+		else {
+			std::cout << yylineno << " STRING " << our_string << std::endl;
+			our_string.clear();
+			is_string_open = false;
+		}
+		return;
+	}
+	std::string current_lexeme(yytext);
+	edit_lexema(current_lexeme);
+	our_string += current_lexeme;
+}
+
+void edit_lexema(std::string& to_edit) {
+	size_t position = 0;
+	if((position = to_edit.find("\\\\")) != std::string::npos) {
+		to_edit.replace(position, 2, 1, '\\');
+	} else if((position = to_edit.find("\\n")) != std::string::npos) {
+		to_edit.replace(position, 2, 1, '\n');
+	} else if((position = to_edit.find("\\r")) != std::string::npos) {
+		to_edit.replace(position, 2, 1, '\r');
+	} else if((position = to_edit.find("\\t")) != std::string::npos) {
+		to_edit.replace(position, 2, 1, '\t');
+	} else if((position = to_edit.find("\\\"")) != std::string::npos) {
+		to_edit.replace(position, 2, 1, '\"');
+	} else if((position = to_edit.find("\\0")) != std::string::npos) {
+		to_edit.replace(position, 2, 1, '\0');
+	} else if((position = to_edit.find("\\x")) != std::string::npos) {
+		std::string hex_str = to_edit.substr(position + 2, 2);
+		std::istringstream hex_stream(hex_str);
+		int hex_int;
+		hex_stream >> std::hex >> hex_int;
+		char hex_char = char(hex_int);
+		to_edit.replace(position, 4, 1, hex_char);
+	}
+}
+
 BasicToken* identifyToken(int token) {
 	if (token < 0) {//error case
 		return nullptr;
@@ -65,9 +122,9 @@ BasicToken* identifyToken(int token) {
 	else if (token == COMMENT) {
 		return new CommentToken();
 	}
-	/*if (token == STRING) {
-		//handle string
-	}*/
+	if (token == STRING) {
+		return new StringToken();
+	}
 	else {
 		return new BasicToken(tokentype(token));
 	}

@@ -8,11 +8,11 @@
 digit ([0-9])
 letter ([a-zA-Z])
 whitespace ([\t\n\r ])
+string_chars [\t\x20-\x7E]
 string_hexa_to_string ([0-7][0-9A-F])
-string_escape_sequence ([\\(\\|n|r|\"|t|0|x{string_hexa_to_string})])
+string_escape_sequence \\\\|\\\"|\\n|\\r|\\t|\\0|\\x{string_hexa_to_string}
 
 %X STRING_RULES
-%x STRING_SEQUENCE
 
 %%
 void                        return VOID;
@@ -45,17 +45,13 @@ continue                    return CONTINUE;
 0|[1-9]{digit}*             return NUM;
 \/\/[^\n\r]                 return COMMENT;
 
-"                           BEGIN(STRING_RULES);
-<STRING_RULES>"             BEGIN(INITIAL); return STRING;
-<STRING_RULES>\\            BEGIN(STRING_SEQUENCE);
-<STRING_SEQUENCE>
+[\"]                                      BEGIN(STRING_RULES); return STRING;
+<STRING_RULES>{string_escape_sequence}    return STRING;
+<STRING_RULES>[\"]                        BEGIN(INITIAL); return STRING;
+<STRING_RULES>{string_chars}              return STRING;
 
 
 {whitespace}                ;
-.                           return error; //undefined lexema
-
-
-
 
 
 %%
