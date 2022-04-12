@@ -5,12 +5,14 @@
 
 %option yylineno
 %option noyywrap
+
 digit ([0-9])
 letter ([a-zA-Z])
 whitespace ([\t\n\r ])
 string_chars [\t\x20-\x7E]
 string_hexa_to_string ([0-7][0-9A-F])
-string_escape_sequence \\\\|\\\"|\\n|\\r|\\t|\\0|\\x{string_hexa_to_string}
+string_escape_sequence (\\\\|\\\"|\\n|\\r|\\t|\\0|\\x{string_hexa_to_string})
+string_ilegal_sequence (\\.|\\\n|\\\r|\\x|\\x(.|\r\n)|\\x(.|\r\n)(.|\r\n))
 
 %X STRING_RULES
 
@@ -47,11 +49,13 @@ continue                    return CONTINUE;
 
 [\"]                                      BEGIN(STRING_RULES); return STRING;
 <STRING_RULES>{string_escape_sequence}    return STRING;
+<STRING_RULES>{string_ilegal_sequence}    return ERROR_UNDEFINED_ESCAPE_SEQUENCE;
 <STRING_RULES>[\"]                        BEGIN(INITIAL); return STRING;
+<STRING_RULES>[\n\r]                      return ERROR_UNCLOSED_STRING;
 <STRING_RULES>{string_chars}              return STRING;
-
+<STRING_RULES>.                           return ERROR_UNDEFINED_CHAR;
 
 {whitespace}                ;
-
+.                           return ERROR_UNDEFINED_CHAR;
 
 %%

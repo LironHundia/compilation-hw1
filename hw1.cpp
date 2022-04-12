@@ -17,7 +17,6 @@ public:
 	void handleToken() override;
 };
 
-
 class StringToken : public BasicToken {
 public:
 	static std::string our_string;
@@ -30,6 +29,10 @@ public:
 BasicToken* identifyToken(int token);
 void handleError(int token);
 void edit_lexema(std::string& to_edit);
+//error functions:
+void ErrorUndefinedChar();
+void ErrorUnclosedString();
+void ErrorUndefinedEscapeSequence();
 
 //definitions
 std::string StringToken::our_string = std::string();
@@ -115,6 +118,21 @@ void edit_lexema(std::string& to_edit) {
 	}
 }
 
+
+//error functions:
+void ErrorUndefinedChar() {
+	std::cout<< "ERROR " << yytext << std::endl;
+}
+void ErrorUnclosedString() {
+	std::cout << "Error unclosed string" << std::endl;
+}
+void ErrorUndefinedEscapeSequence(){
+	std::string bad_sequence(yytext);
+	bad_sequence.erase(0,1); //remove the first '\'
+	std::cout << "Error undefined escape sequence " << bad_sequence << std::endl;
+}
+
+
 BasicToken* identifyToken(int token) {
 	if (token < 0) {//error case
 		return nullptr;
@@ -130,11 +148,23 @@ BasicToken* identifyToken(int token) {
 	}
 }
 
+
 void handleError(int token) {
-	//TODO - need to add error handler
-	std::cout << "error" << std::endl;
+	if (token == ERROR_UNDEFINED_CHAR) {
+		ErrorUndefinedChar();
+	}
+	else if(token == ERROR_UNCLOSED_STRING) {
+		ErrorUnclosedString();
+	}
+	else if(token == ERROR_UNDEFINED_ESCAPE_SEQUENCE) {
+		ErrorUndefinedEscapeSequence();
+	}
+	else {
+		std::cout << "ERROR - WRONG ERROR NUMBER!" << std::endl;
+	}
 	exit(0);
 }
+
 
 int main()
 {
@@ -148,6 +178,9 @@ int main()
 		}
 		current_token->handleToken();
 		delete current_token;
+	}
+	if (StringToken::is_string_open == true){
+		ErrorUnclosedString();
 	}
 	return 0;
 }

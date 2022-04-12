@@ -1,6 +1,11 @@
 #ifndef TOKENS_HPP_
 #define TOKENS_HPP_
 #include <cstdlib>
+
+const int ERROR_UNDEFINED_CHAR = -1;
+const int ERROR_UNCLOSED_STRING = -2;
+const int ERROR_UNDEFINED_ESCAPE_SEQUENCE = -3;
+
   enum tokentype
   {
     VOID = 1,
